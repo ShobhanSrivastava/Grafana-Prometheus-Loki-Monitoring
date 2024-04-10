@@ -4,6 +4,10 @@ const morgan = require('morgan');
 const logger = require('./winston');
 const promClient = require('./prometheus');
 
+const httpBasic = require('http-basic');
+
+const authenticate = httpBasic.authenticate('user', 'password');
+
 const app = express();
 
 // Create a custom stream object with a write function
@@ -21,7 +25,14 @@ console.warn = (...args) => logger.warn.call(logger, ...args);
 console.error = (...args) => logger.error.call(logger, ...args);
 console.debug = (...args) => logger.debug.call(logger, ...args);
 
-app.get('/metrics', async (req, res) => {
+function authMiddleware(req, res, next) {
+    if (!authenticate(req, res)) {
+        return res.status(401).send('Unauthorized');
+    }
+    next();
+}
+
+app.get('/metrics', authMiddleware, async (req, res) => {
     res.setHeader('Content-Type', promClient.register.contentType);
     const metrics = await promClient.register.metrics();
     res.send(metrics);
