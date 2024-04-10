@@ -4,10 +4,6 @@ const morgan = require('morgan');
 const logger = require('./winston');
 const promClient = require('./prometheus');
 
-const httpBasic = require('http-basic');
-
-const authenticate = httpBasic.authenticate('user', 'password');
-
 const app = express();
 
 // Create a custom stream object with a write function
@@ -26,9 +22,9 @@ console.error = (...args) => logger.error.call(logger, ...args);
 console.debug = (...args) => logger.debug.call(logger, ...args);
 
 function authMiddleware(req, res, next) {
-    if (!authenticate(req, res)) {
-        return res.status(401).send('Unauthorized');
-    }
+    const authHeader = req.headers.authorization;
+    if(!authHeader) return res.status(401).send("Unauthorised");
+
     next();
 }
 
