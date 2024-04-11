@@ -13,6 +13,14 @@ logger.stream = {
     },
 };
 
+app.get('/metrics', async (req, res) => {
+    console.log(req);
+    const header = req.headers.authorization;
+    if(!header) return res.status(401).send("Unauthorised");
+
+    return res.status(200).send(await promClient.register.metrics());
+})
+
 app.use(morgan('tiny', { stream: logger.stream } ));
 
 console.log = (...args) => logger.info.call(logger, ...args);
@@ -20,19 +28,6 @@ console.info = (...args) => logger.info.call(logger, ...args);
 console.warn = (...args) => logger.warn.call(logger, ...args);
 console.error = (...args) => logger.error.call(logger, ...args);
 console.debug = (...args) => logger.debug.call(logger, ...args);
-
-function authMiddleware(req, res, next) {
-    const authHeader = req.headers.authorization;
-    if(!authHeader) return res.status(401).send("Unauthorised");
-
-    next();
-}
-
-app.get('/metrics', authMiddleware, async (req, res) => {
-    res.setHeader('Content-Type', promClient.register.contentType);
-    const metrics = await promClient.register.metrics();
-    res.send(metrics);
-})
 
 app.get('/fast', (req, res) => {
     console.log(`You've hit the GET /fast`);
