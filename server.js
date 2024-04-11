@@ -14,9 +14,14 @@ logger.stream = {
 };
 
 app.get('/metrics', async (req, res) => {
-    console.log(req);
-    const header = req.headers.authorization;
-    if(!header) return res.status(401).send("Unauthorised");
+    const authHeader = req.headers.authorization;
+    console.log(authHeader);
+
+    const token = authHeader?.split(" ")[1];
+    console.log(token);
+
+    if(!token || token !== process.env.PROMETHEUS_BEARER_TOKEN) 
+        return res.status(401).send("Unauthorised");
 
     return res.status(200).send(await promClient.register.metrics());
 })
